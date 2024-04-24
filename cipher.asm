@@ -25,6 +25,13 @@ console_count dd 0
 ;STRING DE ENCERRAMENTO
 finalOutput db "Programa encerrado!", 0h
 
+;STRING DE ARQUIVO
+outputArq1 db "Digite o arquivo de entrada: ", 0ah, 0h
+outputArq2 db "Digite o nome do arquivo de saida(criptografado): ", 0ah, 0h
+outputChave db "Digite a chave de criptografia: ", 0ah, 0h 
+inputArqEntrada db 20 dup(0)
+inputChave db 10 dup(0)
+inputArqSaida db 20 dup (0)
 
 
 .code
@@ -34,7 +41,6 @@ start:
         invoke GetStdHandle, STD_OUTPUT_HANDLE
         mov outputHandle, eax
         invoke WriteConsole, outputHandle, addr menuOutput, sizeof menuOutput, addr console_count, NULL
-
         ;Entrada de dado da opção escolhida pelo usuário
         invoke GetStdHandle, STD_INPUT_HANDLE
         mov inputHandle, eax
@@ -67,6 +73,43 @@ start:
 
     criptografar:
         ;aqui vai toda a logica de criptografia
+
+        ;perguntar o arquivo de entrada
+        push STD_OUTPUT_HANDLE
+        call GetStdHandle
+        mov outputHandle, eax
+        invoke WriteConsole, outputHandle, addr outputArq1, sizeof outputArq1 -1, addr console_count, NULL
+        
+        ;receber o nome do arquivo de entrada
+        invoke GetStdHandle, STD_INPUT_HANDLE
+        mov inputHandle, eax
+        invoke ReadConsole, inputHandle, addr inputArqEntrada, sizeof inputArqEntrada, addr console_count, NULL
+        invoke StrLen, addr inputArqEntrada
+
+        ;perguntar o nome do arquivo de saida
+        push STD_OUTPUT_HANDLE
+        call GetStdHandle
+        mov outputHandle, eax
+        invoke WriteConsole, outputHandle, addr outputArq2, sizeof outputArq2 -1, addr console_count, NULL
+        
+        ;receber o nome do arquivo de saida
+        invoke GetStdHandle, STD_INPUT_HANDLE
+        mov inputHandle, eax
+        invoke ReadConsole, inputHandle, addr inputArqSaida, sizeof inputArqSaida, addr console_count, NULL
+        invoke StrLen, addr inputArqSaida
+
+        ;perguntar a chave de criptografia
+        push STD_OUTPUT_HANDLE
+        call GetStdHandle
+        mov outputHandle, eax
+        invoke WriteConsole, outputHandle, addr outputChave, sizeof outputChave -1, addr console_count, NULL
+        
+        ;receber o nome do arquivo de saida
+        invoke GetStdHandle, STD_INPUT_HANDLE
+        mov inputHandle, eax
+        invoke ReadConsole, inputHandle, addr inputChave, sizeof inputChave, addr console_count, NULL
+        invoke StrLen, addr inputChave
+        
         jmp menu
 
     descriptografar:
