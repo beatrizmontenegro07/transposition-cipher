@@ -62,9 +62,9 @@ start:
         invoke GetStdHandle, STD_INPUT_HANDLE
         mov inputHandle, eax
         invoke ReadConsole, inputHandle, addr inputEscolha, sizeof inputEscolha, addr console_count, NULL
-        invoke StrLen, addr inputEscolha
 
         ;Tratamento de entrada do usuário
+        ;Lógica contida na videoaula de entrada/saida
         mov esi, offset inputEscolha
         proximoMenu:
             mov al, [esi]
@@ -91,47 +91,46 @@ start:
         cmp escolha, 3
         je fim
 
-        ;caso nao tenha sido digitado um numero valido pelo usuario
+        ;Caso nao tenha sido digitado um numero valido pelo usuario
         jmp menu
 
-    ;leitura de arquivos de entrada/saida e a chave para realizar a criptografia
+    ;Leitura de arquivos de entrada/saida e a chave para realizar a criptografia/descriptografia
     lerArquivosChave:
 
-        ;perguntar o arquivo de entrada
+        ;Perguntar o arquivo de entrada
         invoke GetStdHandle, STD_OUTPUT_HANDLE
         mov outputHandle, eax
         invoke WriteConsole, outputHandle, addr outputArq1, sizeof outputArq1 -1, addr console_count, NULL
         
-        ;receber o nome do arquivo de entrada
+        ;Receber o nome do arquivo de entrada
         invoke GetStdHandle, STD_INPUT_HANDLE
         mov inputHandle, eax
         invoke ReadConsole, inputHandle, addr inputArqEntrada, sizeof inputArqEntrada, addr console_count, NULL
-        invoke StrLen, addr inputArqEntrada
 
-        ;tratamento do arquivo de entrada
+        ;Tratamento do arquivo de entrada
         mov esi, offset inputArqEntrada
         proximoEntrada:
             mov al, [esi]
             inc esi
             cmp al, 13
             jne proximoEntrada
-        dec esi
-        xor al, al
-        mov [esi], al
+            dec esi
+            xor al, al
+            mov [esi], al
         
 
-        ;perguntar o nome do arquivo de saida
+        ;Perguntar o nome do arquivo de saida
         invoke GetStdHandle, STD_OUTPUT_HANDLE
         mov outputHandle, eax
         invoke WriteConsole, outputHandle, addr outputArq2, sizeof outputArq2 -1, addr console_count, NULL
         
-        ;receber o nome do arquivo de saida
+        ;Receber o nome do arquivo de saida
         invoke GetStdHandle, STD_INPUT_HANDLE
         mov inputHandle, eax
         invoke ReadConsole, inputHandle, addr inputArqSaida, sizeof inputArqSaida, addr console_count, NULL
-        invoke StrLen, addr inputArqSaida
+       
 
-        ;tratamento do arquivo de saida
+        ;Tratamento do arquivo de saida
         mov esi, offset inputArqSaida
         proximoSaida:
             mov al, [esi]
@@ -151,35 +150,49 @@ start:
         invoke GetStdHandle, STD_INPUT_HANDLE
         mov inputHandle, eax
         invoke ReadConsole, inputHandle, addr inputChave, sizeof inputChave, addr console_count, NULL
-        invoke StrLen, addr inputChave
+        
 
         ;tratamento da chave
         mov esi, offset inputChave
         proximoChave:
             mov al, [esi]
             inc esi
-            cmp al, 13
-            jne proximoChave
+            cmp al, 48
+            jl terminaChave
+            cmp al, 58
+            jl proximoChave
+        terminaChave:
             dec esi
             xor al, al
             mov [esi], al
 
-        ;Convertendo a string para um array do tipo dword (CORRIGIR DEPOIS DANDO ERRO)
+        ;Convertendo a string para um array do tipo dword
         mov esi, offset inputChave ;aponta para o inicio do input da chave (string)
         mov edi, offset chaveArray ;aponta para o inicio do vetor do tipo dword
-        mov ecx, 8
+        mov ecx, 8 ;contador para o laço
         conversor:
             xor eax, eax
             mov al, [esi] ;move o caractere atual para al
-            sub al, '0' ;converte para o valor correspondente na tabela ascii
-            ;mov [edi], eax ;move o valor para uma posição no array dword chave
-            ;add edi, 4 ;proxima posição no array de dword 
+            sub al, 48 ;converte para o valor correspondente na tabela ascii
+            mov [edi], eax ;move o valor para uma posição no array dword chave
+            add edi, 4 ;proxima posição no array de dword 
             inc esi ;proximo caractere na string
             dec ecx
             cmp ecx, 0 ;verifica se pecorreu todas as posicoes
             jge conversor ;se não tiver pecorrido tudo, volta pro label conversor
-        
 
+
+        ;verificando se a conversão ocorreu corretamente
+        ;mov esi, offset chaveArray
+        ;mov ecx, 8
+        ;imprimir:
+        ;    mov ebx, [esi]
+        ;    push ecx
+        ;    printf("%d\n", ebx)
+        ;    pop ecx
+        ;    add esi, 4
+        ;    loop imprimir
+            
         ;abertura do arquivo de entrada
         invoke CreateFile, addr inputArqEntrada, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
         mov fileHandleEntrada, eax
@@ -191,32 +204,34 @@ start:
          
         ;caso o usuário tenha escolhido 1, executa a criptografia
         cmp escolha, 1
-        je criptografar
+        je criptografando
 
         ;caso o usuário tenha escolhido 2, executa a descriptografia
         cmp escolha, 2
         je descriptografar
 
-    criptografar:
-        ;aqui vai toda a logica de criptografia
-        ;leitura de 8bytes
+    criptografando:
+        ;Aqui vai toda a logica de criptografia
+        ;Leitura de 8 em 8 bytes
         continuar:
-            mov esi, offset bufferEntrada
+            mov esi, offset bufferEntrada ;aponta para o incio do buffer
             mov ecx, 0
-            ;zerar buffer de entrada
+            ;Zerar buffer de entrada
             zerar:
-                mov al, [esi]
-                xor al, al
-                mov [esi], al
+                mov al, [esi] ;move o caractere atual para al
+                xor al, al   ;al=0
+                mov [esi], al ;move 0 para a posição em que esi esta apontando
                 inc esi
                 inc ecx
                 cmp ecx, 8
                 jne zerar
-                    
+
+            ;Leitura de 8 bytes do arquivo       
             invoke ReadFile, fileHandleEntrada, addr bufferEntrada, 8, addr readCount, NULL
+            ;Verifica de o readCount é 0 para encerrar a leitura/escrita
             cmp readCount, 0
             je finalizar
-            ;escrita no arquivo de saida 
+            ;Escrita no arquivo de saida 
             invoke WriteFile, fileHandleSaida, addr bufferEntrada, 8, addr writeCount, NULL
             jmp continuar
             
