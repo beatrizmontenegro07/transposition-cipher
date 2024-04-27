@@ -48,7 +48,7 @@ inputChave db 8 dup(0)
 fileHandleEntrada dd 0
 fileHandleSaida dd 0
 bufferEntrada db 8 dup(0)
-
+bufferSaida db 8 dup(0)
 
 .code
 start:
@@ -128,7 +128,7 @@ start:
         invoke GetStdHandle, STD_INPUT_HANDLE
         mov inputHandle, eax
         invoke ReadConsole, inputHandle, addr inputArqSaida, sizeof inputArqSaida, addr console_count, NULL
-       
+        
 
         ;Tratamento do arquivo de saida
         mov esi, offset inputArqSaida
@@ -181,6 +181,8 @@ start:
             cmp ecx, 0 ;verifica se pecorreu todas as posicoes
             jge conversor ;se não tiver pecorrido tudo, volta pro label conversor
 
+        invoke ReadConsole, inputHandle, addr inputEscolha, sizeof inputEscolha, addr console_count, NULL
+        
 
         ;verificando se a conversão ocorreu corretamente
         ;mov esi, offset chaveArray
@@ -231,8 +233,16 @@ start:
             ;Verifica de o readCount é 0 para encerrar a leitura/escrita
             cmp readCount, 0
             je finalizar
+            
+            mov esi, offset chaveArray
+            mov edi, offset bufferEntrada
+            mov ecx, offset bufferSaida
+            push esi
+            push edi
+            push ecx
+            call Criptografa
             ;Escrita no arquivo de saida 
-            invoke WriteFile, fileHandleSaida, addr bufferEntrada, 8, addr writeCount, NULL
+            invoke WriteFile, fileHandleSaida, addr bufferSaida, 8, addr writeCount, NULL
             jmp continuar
             
         finalizar:
@@ -245,6 +255,43 @@ start:
     descriptografar:
         ;aqui vai toda a logica de descriptografia
         jmp menu
+        continuar_d:
+            mov esi, offset bufferEntrada ;aponta para o incio do buffer
+            mov ecx, 0
+            ;Zerar buffer de entrada
+            zerar_d:
+                mov al, [esi] ;move o caractere atual para al
+                xor al, al   ;al=0
+                mov [esi], al ;move 0 para a posição em que esi esta apontando
+                inc esi
+                inc ecx
+                cmp ecx, 8
+                jne zerar_d
+
+            ;Leitura de 8 bytes do arquivo       
+            invoke ReadFile, fileHandleEntrada, addr bufferEntrada, 8, addr readCount, NULL
+            ;Verifica de o readCount é 0 para encerrar a leitura/escrita
+            cmp readCount, 0
+            je finalizar_d
+            mov esi, offset chaveArray
+            mov edi, offset bufferEntrada
+            mov ecx, offset bufferSaida
+            push esi
+            push edi
+            push ecx
+            call Descriptografa
+            ;Escrita no arquivo de saida 
+            invoke WriteFile, fileHandleSaida, addr bufferSaida, 8, addr writeCount, NULL
+            jmp continuar_d
+            
+        finalizar_d:
+        ;fechar o arquivo
+        invoke CloseHandle, fileHandleEntrada
+        invoke CloseHandle, fileHandleSaida
+                
+        jmp menu
+
+
            
     fim:
         ;menssagem e encerramento do programa
@@ -252,4 +299,33 @@ start:
         mov outputHandle, eax
         invoke WriteConsole, outputHandle, addr finalOutput, sizeof finalOutput, addr console_count, NULL
         invoke ExitProcess, 0
+
+    Criptografa:
+    push ebp
+    mov ebp, esp
+    
+    mov esi, DWORD PTR[ebp+8];movendo endereço de bufferEntrada para esi
+    mov edi, DWORD PTR[ebp+12] ;movendo endereço de bufferSaida para edi
+    mov ecx, DWORD PTR[ebp+16] ;movendo endereço do array de chaves para ecx
+
+        
+    mov esp, ebp
+    pop ebp
+    ret 4
+
+    Descriptografa:
+    push ebp
+    mov ebp, esp
+    
+    mov esi, DWORD PTR[ebp+8];movendo endereço de bufferEntrada para esi
+    mov edi, DWORD PTR[ebp+12] ;movendo endereço de bufferSaida para edi
+    mov ecx, DWORD PTR[ebp+16] ;movendo endereço do array de chaves para ecx
+
+        
+    mov esp, ebp
+    pop ebp
+    ret 4
+
+
 end start 
+
