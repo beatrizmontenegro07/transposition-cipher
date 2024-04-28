@@ -304,10 +304,30 @@ start:
     mov edi, DWORD PTR[ebp+12] ;movendo endereço de bufferSaida para edi
     mov ecx, DWORD PTR[ebp+16] ;movendo endereço do array de chaves para ecx
 
-        
+    ;lógica da criptografia:
+    ;semelhante à lógica da descriptografia, mas com as seguintes diferenças:
+    ;o byte atual do arquivo de entrada é copiado para o registrador dl
+    ;o registrador esi atua como ponteiro para a posição do byte na memória
+    ;o byte em dl é criptografado usando a chave e escrito na posição de memória indicada por ebx
+    ;o registrador ebx funciona como ponteiro para a posição de saída no arquivo
+    
+    xor eax, eax
+    cripto:
+        mov ebx, edi
+        add ebx, [ecx]
+        mov dl, [esi] ;movendo o byte 'esi' para 'dl' em que contém o endereço de memória dos dados originais
+        mov [ebx], dl ;escrevendo o byte lido [esi] em uma posição dada pela chave [ecx], que foi somada no endereço de destino ebx
+        inc eax
+        cmp eax, 8
+        je fimcripto
+        inc esi
+        add ecx, 4
+        jmp cripto
+    fimcripto:
     mov esp, ebp
     pop ebp
     ret 4
+
 
     Descriptografa:
     push ebp
