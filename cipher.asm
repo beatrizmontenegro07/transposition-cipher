@@ -234,12 +234,12 @@ start:
             cmp readCount, 0
             je finalizar
             
-            mov esi, offset chaveArray
+            mov ecx, offset chaveArray
             mov edi, offset bufferEntrada
-            mov ecx, offset bufferSaida
+            mov esi, offset bufferSaida
+            push ecx
             push esi
             push edi
-            push ecx
             call Criptografa
             ;Escrita no arquivo de saida 
             invoke WriteFile, fileHandleSaida, addr bufferSaida, 8, addr writeCount, NULL
@@ -254,7 +254,6 @@ start:
 
     descriptografar:
         ;aqui vai toda a logica de descriptografia
-        jmp menu
         continuar_d:
             mov esi, offset bufferEntrada ;aponta para o incio do buffer
             mov ecx, 0
@@ -273,12 +272,12 @@ start:
             ;Verifica de o readCount é 0 para encerrar a leitura/escrita
             cmp readCount, 0
             je finalizar_d
-            mov esi, offset chaveArray
-            mov edi, offset bufferEntrada
-            mov ecx, offset bufferSaida
-            push esi
-            push edi
+            mov ecx, offset chaveArray
+            mov edi, offset bufferSaida
+            mov esi, offset bufferEntrada
             push ecx
+            push edi
+            push esi
             call Descriptografa
             ;Escrita no arquivo de saida 
             invoke WriteFile, fileHandleSaida, addr bufferSaida, 8, addr writeCount, NULL
@@ -288,11 +287,8 @@ start:
         ;fechar o arquivo
         invoke CloseHandle, fileHandleEntrada
         invoke CloseHandle, fileHandleSaida
-                
         jmp menu
-
-
-           
+   
     fim:
         ;menssagem e encerramento do programa
         invoke GetStdHandle, STD_OUTPUT_HANDLE
@@ -317,15 +313,33 @@ start:
     push ebp
     mov ebp, esp
     
-    mov esi, DWORD PTR[ebp+8];movendo endereço de bufferEntrada para esi
-    mov edi, DWORD PTR[ebp+12] ;movendo endereço de bufferSaida para edi
+    mov edi, DWORD PTR[ebp+8];movendo endereço de bufferEntrada para edi
+    mov esi, DWORD PTR[ebp+12] ;movendo endereço de bufferSaida para esi
     mov ecx, DWORD PTR[ebp+16] ;movendo endereço do array de chaves para ecx
 
-        
+    ;a logica da desciptografia será:
+    ;criar um loop que percorre pelos 8 bytes do array de buffersaida e de chave
+    ;o endereço de edi sera sempre fixo, apontando para o primeiro caractere do array
+    ;no loop, primeiro moveremos o endereço que esta em edi para um outro registrador, para poder manipulá-lo (nesse caso ebx)
+    ;depois somaremos ebx ao valor da chave do indice correspondente (se vamos preencher o primeiro caractere do bufferSaida, usaremos o primeio valor de chave)
+    ;colocaremos o valor que agora ebx aponta para o caractere para o qual o bufferDeSaida aponta
+    ;por ultimo adicionaremos um ao contador(eax) e ao endereço de saida(esi). E adicionaremos 4 para o array da chaves ja que é um array do tipo DWORD
+    xor eax, eax
+    descrip:
+        mov ebx, edi 
+        add ebx, [ecx] 
+        mov dl, [ebx] 
+        mov [esi], dl
+        inc eax
+        cmp eax, 8
+        je fimzinho
+        inc esi
+        add ecx, 4
+        jmp descrip
+    fimzinho:
     mov esp, ebp
     pop ebp
     ret 4
-
 
 end start 
 
