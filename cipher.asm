@@ -24,7 +24,7 @@ inputEscolha db 16 dup(0)
 
 ;VARIAVEIS DE ENTRADA
 escolha dd 0
-chaveArray dword 8 dup(0)
+chaveArray dword 11 dup(0)
 
 ;VARIAVEIS DE PRINT/INPUT
 outputHandle dd 0
@@ -42,7 +42,7 @@ outputChave db "Digite a chave (max 8 digitos, 0-7): ", 0h
 ;INPUT DE ARQUIVO/CHAVE
 inputArqEntrada db 50 dup(0)
 inputArqSaida db 50 dup (0)
-inputChave db 8 dup(0)
+inputChave db 11 dup(0)
 
 ;VARIAVEIS DE ARQUIVO
 fileHandleEntrada dd 0
