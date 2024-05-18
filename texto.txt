@@ -1,0 +1,7 @@
+A cifra de transposição não altera as letras do texto, mas sim sua ordem. Ela reorganiza as letras do texto original de acordo com uma regra predefinida. Embora não seja tão segura quanto as cifras de substituição modernas, a transposição pode dificultar a leitura direta do texto cifrado.
+
+Origem: Usada desde os tempos antigos.
+
+Descrição: Reorganiza as letras do texto original de acordo com uma determinada regra.
+
+Exemplo: A mensagem "HELLO WORLD" poderia ser criptografada como "OLRELHWDLO".
